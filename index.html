@@ -39,8 +39,7 @@
 
   /* sticky team picker */
   .controls{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,var(--bg) 80%,rgba(21,16,43,0));padding:10px 0 12px}
-  .team-chips{display:flex;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 1px}
-  .team-chips::-webkit-scrollbar{display:none}
+  .team-chips{display:flex;flex-wrap:wrap;gap:7px;padding:2px 1px}
   .tchip{flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--muted);
     padding:8px 13px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;
     white-space:nowrap;line-height:1.25;text-align:left;transition:background .15s,border-color .15s}
