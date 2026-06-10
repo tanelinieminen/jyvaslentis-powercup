@@ -39,12 +39,12 @@
 
   /* sticky team picker */
   .controls{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,var(--bg) 80%,rgba(21,16,43,0));padding:10px 0 12px}
-  .team-chips{display:flex;flex-wrap:wrap;gap:7px;padding:2px 1px}
-  .tchip{flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--muted);
-    padding:8px 13px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;
-    white-space:nowrap;line-height:1.25;text-align:left;transition:background .15s,border-color .15s}
-  .tchip small{display:block;font-size:10px;font-weight:600;opacity:.65;margin-top:1px}
-  .tchip.home{font-size:13px}
+  .team-chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px;padding:2px 1px}
+  .tchip{border:1px solid var(--line);background:var(--card);color:var(--muted);
+    padding:9px 12px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;
+    line-height:1.25;text-align:left;transition:background .15s,border-color .15s;width:100%}
+  .tchip small{display:block;font-size:10px;font-weight:600;opacity:.65;margin-top:2px}
+  .tchip.home{grid-column:1/-1;font-size:13px}
   .tchip.active{background:linear-gradient(180deg,var(--purple-l),var(--purple));color:#fff;border-color:var(--purple-l)}
   .tchip.active small{opacity:.8}
   .tchip.home.active{background:linear-gradient(180deg,var(--cyan),var(--cyan-d));color:#06283a;border-color:var(--cyan)}
