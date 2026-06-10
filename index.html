@@ -178,8 +178,10 @@ const ourTeamName = m => { const s=ourSide(m); return s==='A'?m.team_A_name : s=
 const dt = m => new Date(`${m.date}T${(m.time||'00:00:00')}+03:00`);
 const hhmm = m => (m.time||'').slice(0,5);
 function venueOf(m){
-  const n = (m.venue_name_competition || m.venue_location_name || m.venue_name || '').trim();
-  return /^kentt[äa]\s+\S+/i.test(n) ? n : null;
+  const named = (m.venue_name_competition || m.venue_location_name || m.venue_name || '').trim();
+  if(/^kentt[äa]\s+\S+/i.test(named)) return named;   // "Kenttä 3" tms. — luotettava
+  if(m.venue_id && m.venue_id!=='0') return 'Kenttä '+m.venue_id;  // fallback venue_id:stä
+  return null;
 }
 
 function todayHelsinki(){ return new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Helsinki'}); }
