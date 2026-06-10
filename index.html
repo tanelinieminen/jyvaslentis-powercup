@@ -352,42 +352,46 @@ function renderFront(){
 function renderTeams(){
   const el=$('#content');
   const teams = [...selTeams];
+  const today = todayHelsinki();
 
-  // build per-team sections
-  let html = '';
+  const chips = DATES.map(d=>`
+    <div class="day ${d===selDay?'active':''} ${d===today?'today-mark':''}" data-day="${d}">
+      ${DAY[d].n.slice(0,2)} <small>${DAY[d].d}</small></div>`).join('');
+
+  let html = `<div class="days">${chips}</div>`;
+
   teams.forEach(teamName => {
-    const mine = ALL.filter(m=>ourTeamName(m)===teamName);
-    const myRef = REF.filter(m=>m.referee_team_name===teamName);
+    const mine = ALL.filter(m=>ourTeamName(m)===teamName && m.date===selDay);
+    const myRef = REF.filter(m=>m.referee_team_name===teamName && m.date===selDay);
+    const allMine = ALL.filter(m=>ourTeamName(m)===teamName);
+    const allRef  = REF.filter(m=>m.referee_team_name===teamName);
     const live = sortByTime(mine.filter(m=>classify(m)==='live'));
     const up   = sortByTime(mine.filter(m=>classify(m)==='upcoming'));
     const done = sortByTime(mine.filter(m=>classify(m)==='result'));
     const cat  = teamCategory(teamName);
 
     const groups={};
-    mine.forEach(m=>{ const k=m.category_abbrevation+'|'+(m.group_name||''); groups[k]={abbr:m.category_abbrevation,name:m.category_name,grp:m.group_name}; });
+    allMine.forEach(m=>{ const k=m.category_abbrevation+'|'+(m.group_name||''); groups[k]={abbr:m.category_abbrevation,name:m.category_name,grp:m.group_name}; });
     const standLinks = Object.values(groups).map(g=>
       `<a href="${standUrl(g.abbr)}" target="_blank" rel="noopener">${g.name}${g.grp?' · lohko '+g.grp:''} <span class="arr">↗</span></a>`).join('');
 
     html += `<div class="teamhero"><div class="av">🏐</div><div>
-        <h2>${teamName}</h2><p>${cat?cat+' · ':''}${mine.length} ottelua · ${myRef.length} tuomarointia · Power Cup 2026</p></div></div>`;
-    html += sectionBlock('Käynnissä nyt', live, {live:true, icon:'🔴'});
-    // group upcoming and results by day
-    DATES.forEach(d => {
-      const dayUp   = up.filter(m=>m.date===d);
-      const dayDone = done.filter(m=>m.date===d);
-      if(!dayUp.length && !dayDone.length) return;
-      const isToday = d===todayHelsinki();
-      html += `<div class="dayhdr">${DAY[d].n} <span class="dayhdr-date">${DAY[d].d}</span>${isToday?' <span class="dayhdr-today">tänään</span>':''}</div>`;
-      html += dayDone.map(m=>matchCard(m)).join('');
-      html += dayUp.map(m=>matchCard(m)).join('');
-    });
-    html += sectionBlock('Tuomaroinnit', sortByTime(myRef), {icon:'🧑‍⚖️', ref:true});
+        <h2>${teamName}</h2><p>${cat?cat+' · ':''}${allMine.length} ottelua · ${allRef.length} tuomarointia · Power Cup 2026</p></div></div>`;
+
+    if(!mine.length && !myRef.length){
+      html += `<div class="empty">Ei otteluita tänä päivänä.</div>`;
+    } else {
+      html += sectionBlock('Käynnissä nyt', live, {live:true, icon:'🔴'});
+      html += sectionBlock('Tulossa', up, {icon:'⏱️'});
+      html += sectionBlock('Pelatut', done, {icon:'✅'});
+      html += sectionBlock('Tuomaroinnit', sortByTime(myRef), {icon:'🧑‍⚖️', ref:true});
+    }
     html += `<div class="secthead">📊 Lohko & sarjataulukko<span class="ln"></span></div>`;
     html += standLinks ? `<div class="stand">${standLinks}</div>` : `<div class="empty">Ei sarjatietoja.</div>`;
-    if(!mine.length && !myRef.length) html = html.replace(new RegExp(`<div class="secthead">📊[\\s\\S]*$`), '') + `<div class="empty">Ei otteluita tälle joukkueelle.</div>`;
   });
 
   el.innerHTML = html;
+  el.querySelectorAll('.day').forEach(d=>d.addEventListener('click',()=>{ selDay=d.dataset.day; renderTeams(); }));
 }
 
 function render(){ if(selTeams.size>0) renderTeams(); else renderFront(); }
