@@ -89,7 +89,10 @@
   .setbox.cur{border-color:var(--live);color:#fff;background:rgba(255,46,116,.14)}
   .setbox b{color:var(--text)}
 
-  .foot{margin-top:11px;padding-top:10px;border-top:1px dashed var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  .venue{font-size:12px;margin-top:9px;color:var(--text)}
+  .venue.no-venue{color:var(--muted);font-style:italic}
+  .foot{margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  .official-link{color:var(--cyan);text-decoration:none;font-weight:700;white-space:nowrap}
   .foot .ref{display:flex;align-items:center;gap:6px;min-width:0}
   .foot .ref .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .foot a{color:var(--cyan);text-decoration:none;white-space:nowrap;font-weight:600}
@@ -174,7 +177,10 @@ function ourSide(m){ if(m.club_A_id===CLUB||m.club_A_name===CLUBNAME) return 'A'
 const ourTeamName = m => { const s=ourSide(m); return s==='A'?m.team_A_name : s==='B'?m.team_B_name : ''; };
 const dt = m => new Date(`${m.date}T${(m.time||'00:00:00')}+03:00`);
 const hhmm = m => (m.time||'').slice(0,5);
-const venueOf = m => m.venue_location_name || m.venue_name || (m.venue_id?('Kenttä '+m.venue_id):'');
+function venueOf(m){
+  const n = m.venue_name_competition || m.venue_name || '';
+  return /^kentt[äa]\s/i.test(n.trim()) ? n.trim() : null; // null = ei luotettavaa tietoa
+}
 
 function todayHelsinki(){ return new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Helsinki'}); }
 function defaultDay(){ const t=todayHelsinki(); if(DATES.includes(t)) return t; const f=DATES.filter(d=>d>=t); return f[0]||DATES[DATES.length-1]; }
@@ -286,6 +292,9 @@ function matchCard(m, opts={}){
     ? `<div class="ref"><span>🧑‍⚖️</span><span class="nm">${m.referee_team_name||m.referee_1_name}</span></div>`
     : `<div class="ref"></div>`;
   const v=venueOf(m);
+  const venueLine = v
+    ? `<div class="venue">📍 ${v}</div>`
+    : `<div class="venue no-venue">📍 Kenttätieto ei saatavilla</div>`;
   return `<div class="card ${c==='live'?'live':''}">
     <div class="row1">${left}${pill(c)}</div>
     <div class="teams">
@@ -293,9 +302,10 @@ function matchCard(m, opts={}){
       ${teamHTML(m,'B')} ${scoreHTML(m,'B')}
     </div>
     ${setsHTML(m)}
+    ${venueLine}
     <div class="foot">
       ${refLine}
-      <a href="${matchUrl(m.match_id)}" target="_blank" rel="noopener">${(DAY[m.date]?.n||'')} ${hhmm(m)}${v?' · '+v:''} ↗</a>
+      <a class="official-link" href="${matchUrl(m.match_id)}" target="_blank" rel="noopener">${(DAY[m.date]?.n||'')} ${hhmm(m)} · Virallinen ottelusivu ↗</a>
     </div>
   </div>`;
 }
