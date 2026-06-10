@@ -207,8 +207,16 @@ async function load(){
 }
 function dedup(list){ const s=new Set(); return list.filter(m=>!s.has(m.match_id)&&s.add(m.match_id)); }
 
+function catLetter(teamName){
+  const cat = teamCategory(teamName);
+  return (cat.match(/^([A-Z])/)||[])[1] || 'Z';
+}
 function buildChips(){
-  const names = [...new Set(ALL.map(ourTeamName).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fi'));
+  const names = [...new Set(ALL.map(ourTeamName).filter(Boolean))].sort((a,b)=>{
+    const ca=catLetter(a), cb=catLetter(b);
+    if(ca!==cb) return cb.localeCompare(ca,'fi'); // E ensin, A viimeksi
+    return a.localeCompare(b,'fi');
+  });
   const container = $('#teamChips');
   // keep the home chip, add team chips after it
   const homeChip = container.querySelector('.home');
