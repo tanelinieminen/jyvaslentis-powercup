@@ -107,6 +107,10 @@
   .teamhero h2{margin:0;font-size:20px;font-weight:800}
   .teamhero p{margin:2px 0 0;font-size:12px;color:#e7e0ff;opacity:.9}
 
+  .dayhdr{margin:22px 2px 10px;font-size:15px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px}
+  .dayhdr::after{content:"";flex:1;height:1px;background:var(--line)}
+  .dayhdr-date{color:var(--muted);font-weight:600;font-size:13px}
+  .dayhdr-today{background:var(--cyan);color:#06283a;font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;text-transform:uppercase}
   .empty{text-align:center;color:var(--muted);padding:30px 14px;font-size:14px;background:var(--card);border:1px dashed var(--line);border-radius:14px}
   .loading{text-align:center;color:var(--muted);padding:54px 14px}
   .spinner{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--cyan);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px}
@@ -356,7 +360,7 @@ function renderTeams(){
     const myRef = REF.filter(m=>m.referee_team_name===teamName);
     const live = sortByTime(mine.filter(m=>classify(m)==='live'));
     const up   = sortByTime(mine.filter(m=>classify(m)==='upcoming'));
-    const done = sortByTime(mine.filter(m=>classify(m)==='result')).reverse();
+    const done = sortByTime(mine.filter(m=>classify(m)==='result'));
     const cat  = teamCategory(teamName);
 
     const groups={};
@@ -367,8 +371,16 @@ function renderTeams(){
     html += `<div class="teamhero"><div class="av">🏐</div><div>
         <h2>${teamName}</h2><p>${cat?cat+' · ':''}${mine.length} ottelua · ${myRef.length} tuomarointia · Power Cup 2026</p></div></div>`;
     html += sectionBlock('Käynnissä nyt', live, {live:true, icon:'🔴'});
-    html += sectionBlock('Tulevat ottelut', up, {icon:'⏱️'});
-    html += sectionBlock('Tulokset', done, {icon:'✅'});
+    // group upcoming and results by day
+    DATES.forEach(d => {
+      const dayUp   = up.filter(m=>m.date===d);
+      const dayDone = done.filter(m=>m.date===d);
+      if(!dayUp.length && !dayDone.length) return;
+      const isToday = d===todayHelsinki();
+      html += `<div class="dayhdr">${DAY[d].n} <span class="dayhdr-date">${DAY[d].d}</span>${isToday?' <span class="dayhdr-today">tänään</span>':''}</div>`;
+      html += dayDone.map(m=>matchCard(m)).join('');
+      html += dayUp.map(m=>matchCard(m)).join('');
+    });
     html += sectionBlock('Tuomaroinnit', sortByTime(myRef), {icon:'🧑‍⚖️', ref:true});
     html += `<div class="secthead">📊 Lohko & sarjataulukko<span class="ln"></span></div>`;
     html += standLinks ? `<div class="stand">${standLinks}</div>` : `<div class="empty">Ei sarjatietoja.</div>`;
