@@ -178,7 +178,8 @@ const ourTeamName = m => { const s=ourSide(m); return s==='A'?m.team_A_name : s=
 const dt = m => new Date(`${m.date}T${(m.time||'00:00:00')}+03:00`);
 const hhmm = m => (m.time||'').slice(0,5);
 function venueOf(m){
-  return (m.venue_name_competition || m.venue_location_name || m.venue_name || '').trim() || null;
+  const n = (m.venue_name_competition || m.venue_location_name || m.venue_name || '').trim();
+  return /^kentt[äa]\s+\S+/i.test(n) ? n : null;
 }
 
 function todayHelsinki(){ return new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Helsinki'}); }
