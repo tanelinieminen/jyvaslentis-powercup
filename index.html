@@ -37,17 +37,18 @@
   button.refresh{background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:12px;cursor:pointer;font-weight:600}
   button.refresh:active{transform:scale(.97)}
 
-  /* sticky team selector */
-  .controls{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,var(--bg) 74%,rgba(21,16,43,0));padding:12px 0 10px}
-  .selWrap{position:relative}
-  .selWrap::before{content:"🏐";position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none}
-  select#team{
-    width:100%;background:linear-gradient(180deg,var(--card2),var(--card));color:var(--text);
-    border:1.5px solid var(--purple);border-radius:14px;padding:14px 42px 14px 42px;font-size:15px;font-weight:700;
-    -webkit-appearance:none;appearance:none;cursor:pointer;box-shadow:var(--shadow);
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2316a6dd' stroke-width='2.5'><path d='M6 9l6 6 6-6'/></svg>");
-    background-repeat:no-repeat;background-position:right 14px center
-  }
+  /* sticky team picker */
+  .controls{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,var(--bg) 80%,rgba(21,16,43,0));padding:10px 0 12px}
+  .team-chips{display:flex;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 1px}
+  .team-chips::-webkit-scrollbar{display:none}
+  .tchip{flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--muted);
+    padding:8px 13px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;
+    white-space:nowrap;line-height:1.25;text-align:left;transition:background .15s,border-color .15s}
+  .tchip small{display:block;font-size:10px;font-weight:600;opacity:.65;margin-top:1px}
+  .tchip.home{font-size:13px}
+  .tchip.active{background:linear-gradient(180deg,var(--purple-l),var(--purple));color:#fff;border-color:var(--purple-l)}
+  .tchip.active small{opacity:.8}
+  .tchip.home.active{background:linear-gradient(180deg,var(--cyan),var(--cyan-d));color:#06283a;border-color:var(--cyan)}
 
   /* day chips */
   .days{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:14px 0 4px}
@@ -126,10 +127,8 @@
   </header>
 
   <div class="controls">
-    <div class="selWrap">
-      <select id="team">
-        <option value="">🏠  Etusivu — kaikki joukkueet (päivän ottelut)</option>
-      </select>
+    <div class="team-chips" id="teamChips">
+      <button class="tchip home active" data-team="">🏠 Kaikki<small>Etusivu · päivän ottelut</small></button>
     </div>
   </div>
 
@@ -157,8 +156,8 @@ const DAY = {
 };
 
 let ALL = [], REF = [];
-let selTeam = '';                 // '' = front page
-let selDay = null;                // for front page
+let selTeams = new Set();   // empty = front page
+let selDay = null;
 const $ = s => document.querySelector(s);
 
 const num = v => { const n = parseInt(v,10); return isNaN(n)?null:n; };
@@ -181,6 +180,11 @@ const venueOf = m => m.venue_location_name || m.venue_name || (m.venue_id?('Kent
 function todayHelsinki(){ return new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Helsinki'}); }
 function defaultDay(){ const t=todayHelsinki(); if(DATES.includes(t)) return t; const f=DATES.filter(d=>d>=t); return f[0]||DATES[DATES.length-1]; }
 
+function teamCategory(teamName){
+  const m = ALL.find(m=>ourTeamName(m)===teamName);
+  return m ? (m.category_name || m.category_abbrevation || '') : '';
+}
+
 async function load(){
   try{
     const res = await Promise.all(DATES.map(d =>
@@ -192,7 +196,7 @@ async function load(){
     ALL = dedup(matches.filter(m=>ourSide(m)!==null));
     REF = dedup(matches.filter(m=>(m.referee_team_name||'').includes('JyLe')));
 
-    if(!$('#team').dataset.built){ buildTeamSelect(); $('#team').dataset.built='1'; }
+    if(!$('#teamChips').dataset.built){ buildChips(); $('#teamChips').dataset.built='1'; }
     if(selDay===null) selDay = defaultDay();
     render();
     $('#updated').textContent = new Date().toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -204,13 +208,42 @@ async function load(){
 }
 function dedup(list){ const s=new Set(); return list.filter(m=>!s.has(m.match_id)&&s.add(m.match_id)); }
 
-function buildTeamSelect(){
+function buildChips(){
   const names = [...new Set(ALL.map(ourTeamName).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fi'));
-  const sel = $('#team');
-  sel.innerHTML = '<option value="">🏠  Etusivu — kaikki joukkueet (päivän ottelut)</option>'
-    + '<optgroup label="JyväsLentis-joukkueet">'
-    + names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">🏐  ${n}</option>`).join('')
-    + '</optgroup>';
+  const container = $('#teamChips');
+  // keep the home chip, add team chips after it
+  const homeChip = container.querySelector('.home');
+  container.innerHTML = '';
+  container.appendChild(homeChip);
+  names.forEach(n => {
+    const cat = teamCategory(n);
+    const btn = document.createElement('button');
+    btn.className = 'tchip';
+    btn.dataset.team = n;
+    btn.innerHTML = `🏐 ${n}${cat?`<small>${cat}</small>`:''}`;
+    btn.addEventListener('click', () => toggleTeam(n));
+    container.appendChild(btn);
+  });
+}
+
+function toggleTeam(name){
+  if(name===''){
+    selTeams.clear();
+  } else {
+    if(selTeams.has(name)) selTeams.delete(name);
+    else selTeams.add(name);
+  }
+  updateChipStyles();
+  window.scrollTo({top:0,behavior:'smooth'});
+  render();
+}
+
+function updateChipStyles(){
+  $('#teamChips').querySelectorAll('.tchip').forEach(btn => {
+    const t = btn.dataset.team;
+    const active = t==='' ? selTeams.size===0 : selTeams.has(t);
+    btn.classList.toggle('active', active);
+  });
 }
 
 /* ---------- card renderers ---------- */
@@ -229,7 +262,6 @@ function scoreHTML(m, side){
 function setsHTML(m){
   const c=classify(m), sets=setsArr(m); if(!sets.length) return '';
   return `<div class="sets">${sets.map((s,i)=>{
-    const cur = c==='live' && i===sets.length-1 && s[0]<25 && s[1]<25 && s[0]!==s[1]+2 ; // heuristic current set
     return `<span class="setbox ${c==='live'&&i===sets.length-1?'cur':''}">${i+1}. <b>${s[0]}</b>–<b>${s[1]}</b></span>`;
   }).join('')}</div>`;
 }
@@ -294,35 +326,42 @@ function renderFront(){
   el.querySelectorAll('.day').forEach(d=>d.addEventListener('click',()=>{ selDay=d.dataset.day; renderFront(); }));
 }
 
-function renderTeam(){
+function renderTeams(){
   const el=$('#content');
-  const mine = ALL.filter(m=>ourTeamName(m)===selTeam);
-  const myRef = REF.filter(m=>m.referee_team_name===selTeam);
-  const live = sortByTime(mine.filter(m=>classify(m)==='live'));
-  const up   = sortByTime(mine.filter(m=>classify(m)==='upcoming'));
-  const done = sortByTime(mine.filter(m=>classify(m)==='result')).reverse();
+  const teams = [...selTeams];
 
-  // categories / groups for standings
-  const groups={};
-  mine.forEach(m=>{ const k=m.category_abbrevation+'|'+(m.group_name||''); groups[k]={abbr:m.category_abbrevation,name:m.category_name,grp:m.group_name}; });
-  const standLinks = Object.values(groups).map(g=>
-    `<a href="${standUrl(g.abbr)}" target="_blank" rel="noopener">${g.name}${g.grp?' · lohko '+g.grp:''} <span class="arr">↗</span></a>`).join('');
+  // build per-team sections
+  let html = '';
+  teams.forEach(teamName => {
+    const mine = ALL.filter(m=>ourTeamName(m)===teamName);
+    const myRef = REF.filter(m=>m.referee_team_name===teamName);
+    const live = sortByTime(mine.filter(m=>classify(m)==='live'));
+    const up   = sortByTime(mine.filter(m=>classify(m)==='upcoming'));
+    const done = sortByTime(mine.filter(m=>classify(m)==='result')).reverse();
+    const cat  = teamCategory(teamName);
 
-  let html = `<div class="teamhero"><div class="av">🏐</div><div>
-      <h2>${selTeam}</h2><p>${mine.length} ottelua · ${myRef.length} tuomarointia · Power Cup 2026</p></div></div>`;
-  html += sectionBlock('Käynnissä nyt', live, {live:true, icon:'🔴'});
-  html += sectionBlock('Tulevat ottelut', up, {icon:'⏱️'});
-  html += sectionBlock('Tulokset', done, {icon:'✅'});
-  html += sectionBlock('Tuomaroinnit', sortByTime(myRef), {icon:'🧑‍⚖️', ref:true});
-  html += `<div class="secthead">📊 Lohko & sarjataulukko<span class="ln"></span></div>`;
-  html += standLinks ? `<div class="stand">${standLinks}</div>` : `<div class="empty">Ei sarjatietoja.</div>`;
-  if(!mine.length && !myRef.length) html = html.replace(/<div class="secthead">📊[\s\S]*$/, '') + `<div class="empty">Ei otteluita tälle joukkueelle.</div>`;
+    const groups={};
+    mine.forEach(m=>{ const k=m.category_abbrevation+'|'+(m.group_name||''); groups[k]={abbr:m.category_abbrevation,name:m.category_name,grp:m.group_name}; });
+    const standLinks = Object.values(groups).map(g=>
+      `<a href="${standUrl(g.abbr)}" target="_blank" rel="noopener">${g.name}${g.grp?' · lohko '+g.grp:''} <span class="arr">↗</span></a>`).join('');
+
+    html += `<div class="teamhero"><div class="av">🏐</div><div>
+        <h2>${teamName}</h2><p>${cat?cat+' · ':''}${mine.length} ottelua · ${myRef.length} tuomarointia · Power Cup 2026</p></div></div>`;
+    html += sectionBlock('Käynnissä nyt', live, {live:true, icon:'🔴'});
+    html += sectionBlock('Tulevat ottelut', up, {icon:'⏱️'});
+    html += sectionBlock('Tulokset', done, {icon:'✅'});
+    html += sectionBlock('Tuomaroinnit', sortByTime(myRef), {icon:'🧑‍⚖️', ref:true});
+    html += `<div class="secthead">📊 Lohko & sarjataulukko<span class="ln"></span></div>`;
+    html += standLinks ? `<div class="stand">${standLinks}</div>` : `<div class="empty">Ei sarjatietoja.</div>`;
+    if(!mine.length && !myRef.length) html = html.replace(new RegExp(`<div class="secthead">📊[\\s\\S]*$`), '') + `<div class="empty">Ei otteluita tälle joukkueelle.</div>`;
+  });
+
   el.innerHTML = html;
 }
 
-function render(){ if(selTeam) renderTeam(); else renderFront(); }
+function render(){ if(selTeams.size>0) renderTeams(); else renderFront(); }
 
-$('#team').addEventListener('change', e=>{ selTeam=e.target.value; window.scrollTo({top:0,behavior:'smooth'}); render(); });
+$('#teamChips').querySelector('.home').addEventListener('click', ()=>toggleTeam(''));
 $('#refreshBtn').addEventListener('click', ()=>{ $('#refreshBtn').textContent='↻ …'; load().then(()=>$('#refreshBtn').textContent='↻ Päivitä'); });
 
 load();
