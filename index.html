@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JyväsLentis · Power Cup 2026</title>
+<style>
+  :root{
+    --purple:#6e3fa3; --purple-d:#4a2a73; --purple-l:#9a6fd0;
+    --cyan:#16a6dd; --cyan-d:#0e7fab;
+    --bg:#15102b; --bg2:#1c1638; --card:#231b45; --card2:#2c2456;
+    --line:#39306a; --text:#f1eefb; --muted:#a99fce; --gold:#ffd23f;
+    --green:#2fd06b; --red:#ff5d7a; --live:#ff2e74;
+    --radius:16px; --shadow:0 8px 26px rgba(0,0,0,.34);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1100px 460px at 80% -8%, rgba(22,166,221,.16) 0%, transparent 60%),
+      radial-gradient(1100px 520px at 10% 0%, rgba(110,63,163,.32) 0%, transparent 55%),
+      var(--bg) fixed;
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; padding-bottom:46px;
+  }
+  .wrap{max-width:780px;margin:0 auto;padding:0 14px}
+
+  header.top{padding:18px 6px 6px;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .logo{width:230px;max-width:62vw;height:auto;display:block;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))}
+  .tagline{color:var(--muted);font-size:13px;margin:10px 0 0}
+  .tagline b{color:var(--cyan)}
+  .meta{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted)}
+  .meta a{color:var(--cyan);text-decoration:none}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 1.6s infinite;vertical-align:middle}
+  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(47,208,107,.5)}50%{opacity:.5}}
+  button.refresh{background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:12px;cursor:pointer;font-weight:600}
+  button.refresh:active{transform:scale(.97)}
+
+  /* sticky team selector */
+  .controls{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,var(--bg) 74%,rgba(21,16,43,0));padding:12px 0 10px}
+  .selWrap{position:relative}
+  .selWrap::before{content:"🏐";position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none}
+  select#team{
+    width:100%;background:linear-gradient(180deg,var(--card2),var(--card));color:var(--text);
+    border:1.5px solid var(--purple);border-radius:14px;padding:14px 42px 14px 42px;font-size:15px;font-weight:700;
+    -webkit-appearance:none;appearance:none;cursor:pointer;box-shadow:var(--shadow);
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2316a6dd' stroke-width='2.5'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right 14px center
+  }
+
+  /* day chips */
+  .days{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:14px 0 4px}
+  .days::-webkit-scrollbar{display:none}
+  .day{flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--muted);padding:9px 15px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;text-align:center;line-height:1.2}
+  .day small{display:block;font-size:10px;font-weight:600;opacity:.7}
+  .day.active{background:linear-gradient(180deg,var(--cyan),var(--cyan-d));color:#06283a;border-color:var(--cyan)}
+  .day.today-mark::after{content:" •";color:var(--gold)}
+
+  .secthead{display:flex;align-items:center;gap:9px;margin:22px 2px 10px;font-size:13px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+  .secthead .ln{flex:1;height:1px;background:var(--line)}
+  .secthead.live{color:var(--live)}
+  .count{background:var(--card2);border-radius:999px;font-size:11px;padding:1px 8px;color:var(--muted)}
+
+  .card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px;margin-bottom:10px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .card.live{border-color:var(--live);box-shadow:0 0 0 1.5px var(--live),var(--shadow)}
+  .card.live::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--live)}
+  .row1{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+  .cat{font-size:11px;font-weight:800;letter-spacing:.3px;color:var(--cyan);text-decoration:none}
+  .cat .grp{color:var(--muted);font-weight:600}
+  .status-pill{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .s-live{background:var(--live);color:#fff;animation:blink 1.4s infinite}
+  @keyframes blink{50%{opacity:.55}}
+  .s-result{background:rgba(47,208,107,.16);color:var(--green)}
+  .s-upcoming{background:rgba(255,255,255,.07);color:var(--muted)}
+  .ref-tag{font-size:10px;background:rgba(22,166,221,.18);color:#7fd2f3;padding:3px 9px;border-radius:999px;font-weight:800;white-space:nowrap;letter-spacing:.3px}
+
+  .teams{display:grid;grid-template-columns:1fr auto;gap:7px 10px;align-items:center}
+  .team{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:600;min-width:0}
+  .team .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .team.us .nm{font-weight:800;color:#fff}
+  .team.us::before{content:"";width:4px;height:18px;border-radius:3px;background:var(--cyan);flex:0 0 auto}
+  .crest{width:23px;height:23px;border-radius:5px;object-fit:contain;background:#ffffff14;flex:0 0 auto}
+  .setpts{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;text-align:right;min-width:24px}
+  .win{color:#fff}.lose{color:var(--muted)}
+
+  .sets{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .setbox{font-size:11px;font-variant-numeric:tabular-nums;background:var(--card);border:1px solid var(--line);border-radius:7px;padding:2px 7px;color:var(--muted)}
+  .setbox.cur{border-color:var(--live);color:#fff;background:rgba(255,46,116,.14)}
+  .setbox b{color:var(--text)}
+
+  .foot{margin-top:11px;padding-top:10px;border-top:1px dashed var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  .foot .ref{display:flex;align-items:center;gap:6px;min-width:0}
+  .foot .ref .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .foot a{color:var(--cyan);text-decoration:none;white-space:nowrap;font-weight:600}
+
+  .stand{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+  .stand a{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--purple);border-radius:12px;padding:10px 14px;text-decoration:none;color:var(--text);font-size:13px;font-weight:700}
+  .stand a:active{background:var(--card2)}
+  .stand a .arr{color:var(--cyan);font-weight:800}
+
+  .teamhero{display:flex;align-items:center;gap:12px;background:linear-gradient(110deg,var(--purple),var(--cyan-d));border-radius:16px;padding:15px 16px;margin:4px 0 6px;box-shadow:var(--shadow)}
+  .teamhero .av{width:42px;height:42px;border-radius:11px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 auto}
+  .teamhero h2{margin:0;font-size:20px;font-weight:800}
+  .teamhero p{margin:2px 0 0;font-size:12px;color:#e7e0ff;opacity:.9}
+
+  .empty{text-align:center;color:var(--muted);padding:30px 14px;font-size:14px;background:var(--card);border:1px dashed var(--line);border-radius:14px}
+  .loading{text-align:center;color:var(--muted);padding:54px 14px}
+  .spinner{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--cyan);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .errbox{background:rgba(255,93,122,.1);border:1px solid var(--red);border-radius:14px;padding:15px;color:#ffc7d2;font-size:13px;margin:14px 0}
+  footer{margin-top:32px;text-align:center;font-size:11px;color:var(--muted)}
+  footer a{color:var(--cyan);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <!-- JyväsLentis-logo (SVG-uudelleenpiirros brändiväreillä) -->
+    <svg class="logo" viewBox="0 0 520 232" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="JyväsLentis">
+      <defs>
+        <style>
+          .pp{fill:#6e3fa3}.cc{fill:#16a6dd}
+          .wm{font-family:"Arial Black",Arial,sans-serif;font-weight:900;font-style:italic}
+        </style>
+      </defs>
+      <!-- purple backing blob -->
+      <path class="pp" d="M44 70 C44 40 70 26 104 26 L300 26 C440 8 470 60 470 60 L500 150 C508 196 470 210 430 210 L150 214 C70 220 30 196 34 150 Z" opacity="0.92"/>
+      <!-- volleyball -->
+      <g transform="translate(372,92)">
+        <circle r="74" fill="#ffffff"/>
+        <circle r="74" fill="none" stroke="#6e3fa3" stroke-width="9"/>
+        <path d="M-66 -30 C-10 -8 40 -2 70 36" fill="none" stroke="#6e3fa3" stroke-width="8"/>
+        <path d="M2 -74 C-18 -8 -20 36 12 72" fill="none" stroke="#6e3fa3" stroke-width="8"/>
+        <path d="M66 -34 C18 0 -22 18 -64 18" fill="none" stroke="#6e3fa3" stroke-width="8"/>
+      </g>
+      <!-- wordmark -->
+      <text x="60" y="118" class="wm cc" font-size="92" stroke="#6e3fa3" stroke-width="9" paint-order="stroke" style="paint-order:stroke fill">JYVÄS</text>
+      <text x="120" y="158" class="wm pp" font-size="34">jyle</text>
+      <text x="190" y="208" class="wm cc" font-size="92" stroke="#6e3fa3" stroke-width="9" style="paint-order:stroke fill">LENTIS</text>
+    </svg>
+    <p class="tagline"><b>Power Cup 2026</b> · Helsinki 11.–14.6. · joukkueseuranta</p>
+    <div class="meta">
+      <span><span class="dot"></span> Päivitetty <span id="updated">–</span></span>
+      <button class="refresh" id="refreshBtn">↻ Päivitä</button>
+      <a href="https://powercup.torneopal.fi/" target="_blank" rel="noopener">Viralliset tulokset ↗</a>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="selWrap">
+      <select id="team">
+        <option value="">🏠  Etusivu — kaikki joukkueet (päivän ottelut)</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="content">
+    <div class="loading"><div class="spinner"></div>Haetaan otteluita tulospalvelusta…</div>
+  </div>
+
+  <footer>
+    Tiedot: Lentopalloliiton tulospalvelu (Torneopal). Sivu päivittyy automaattisesti 10 s välein — tulokset ja settipisteet tarkentuvat itsestään ottelun edetessä.<br>
+    Avaa puhelimessa tai lisää selaimen kotinäyttöön. Ei tallenna mitään tietoja. Vapaasti jaettavissa seuran pelaajille ja vanhemmille.
+  </footer>
+</div>
+
+<script>
+const API   = 'https://lentopallo-api.torneopal.net/taso/rest/getMatches';
+const COMP  = 'power2026';
+const DATES = ['2026-06-11','2026-06-12','2026-06-13','2026-06-14'];
+const CLUB  = '40';
+const CLUBNAME = 'JyväsLentis';
+const standUrl = c => `https://powercup.torneopal.fi/taso/sarja.php?turnaus=power2026&sarja=${encodeURIComponent(c)}`;
+const matchUrl = id => `https://powercup.torneopal.fi/taso/ottelu.php?ottelu=${id}&turnaus=power2026`;
+const DAY = {
+  '2026-06-11':{n:'Torstai',d:'11.6.'},'2026-06-12':{n:'Perjantai',d:'12.6.'},
+  '2026-06-13':{n:'Lauantai',d:'13.6.'},'2026-06-14':{n:'Sunnuntai',d:'14.6.'}
+};
+
+let ALL = [], REF = [];
+let selTeam = '';                 // '' = front page
+let selDay = null;                // for front page
+const $ = s => document.querySelector(s);
+
+const num = v => { const n = parseInt(v,10); return isNaN(n)?null:n; };
+const isPlayed = m => (m.status||'').toLowerCase()==='played' || (m.winner_id && m.winner_id!=='' && m.winner_id!=='0');
+function setsArr(m){ const o=[]; for(let i=1;i<=5;i++){const a=m['p'+i+'s_A'],b=m['p'+i+'s_B']; if((a!==''&&a!=null)||(b!==''&&b!=null)) o.push([num(a)||0,num(b)||0]);} return o; }
+function isLive(m){
+  if(isPlayed(m)) return false;
+  if(m.live_period && num(m.live_period)>0) return true;
+  const st=(m.status||'').toLowerCase();
+  if(st && st!=='fixture' && st!=='played') return true;
+  return setsArr(m).length>0;
+}
+const classify = m => isPlayed(m) ? 'result' : (isLive(m) ? 'live' : 'upcoming');
+function ourSide(m){ if(m.club_A_id===CLUB||m.club_A_name===CLUBNAME) return 'A'; if(m.club_B_id===CLUB||m.club_B_name===CLUBNAME) return 'B'; return null; }
+const ourTeamName = m => { const s=ourSide(m); return s==='A'?m.team_A_name : s==='B'?m.team_B_name : ''; };
+const dt = m => new Date(`${m.date}T${(m.time||'00:00:00')}+03:00`);
+const hhmm = m => (m.time||'').slice(0,5);
+const venueOf = m => m.venue_location_name || m.venue_name || (m.venue_id?('Kenttä '+m.venue_id):'');
+
+function todayHelsinki(){ return new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Helsinki'}); }
+function defaultDay(){ const t=todayHelsinki(); if(DATES.includes(t)) return t; const f=DATES.filter(d=>d>=t); return f[0]||DATES[DATES.length-1]; }
+
+async function load(){
+  try{
+    const res = await Promise.all(DATES.map(d =>
+      fetch(`${API}?competition=${COMP}&date=${d}`).then(r=>r.json()).then(j=>j.matches||[]).catch(()=>[])
+    ));
+    const matches = res.flat();
+    if(!matches.length) throw new Error('Ei dataa rajapinnasta');
+
+    ALL = dedup(matches.filter(m=>ourSide(m)!==null));
+    REF = dedup(matches.filter(m=>(m.referee_team_name||'').includes('JyLe')));
+
+    if(!$('#team').dataset.built){ buildTeamSelect(); $('#team').dataset.built='1'; }
+    if(selDay===null) selDay = defaultDay();
+    render();
+    $('#updated').textContent = new Date().toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }catch(e){
+    $('#content').innerHTML = `<div class="errbox"><b>Tietojen haku epäonnistui.</b><br>
+      Tarkista verkkoyhteys. Jos selain estää rajapintakutsun, kokeile toista selainta.<br><small>${(e&&e.message)||e}</small></div>
+      <div class="empty">Seuraa otteluita myös <a href="https://powercup.torneopal.fi/" target="_blank">virallisessa tulospalvelussa ↗</a>.</div>`;
+  }
+}
+function dedup(list){ const s=new Set(); return list.filter(m=>!s.has(m.match_id)&&s.add(m.match_id)); }
+
+function buildTeamSelect(){
+  const names = [...new Set(ALL.map(ourTeamName).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fi'));
+  const sel = $('#team');
+  sel.innerHTML = '<option value="">🏠  Etusivu — kaikki joukkueet (päivän ottelut)</option>'
+    + '<optgroup label="JyväsLentis-joukkueet">'
+    + names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">🏐  ${n}</option>`).join('')
+    + '</optgroup>';
+}
+
+/* ---------- card renderers ---------- */
+function teamHTML(m, side){
+  const us = ourSide(m)===side;
+  const name = side==='A'?m.team_A_name:m.team_B_name;
+  const crest = side==='A'?m.club_A_crest:m.club_B_crest;
+  const img = crest ? `<img class="crest" src="${crest}" alt="" onerror="this.style.visibility='hidden'">` : `<span class="crest"></span>`;
+  return `<div class="team ${us?'us':''}">${img}<span class="nm">${name||'?'}</span></div>`;
+}
+function scoreHTML(m, side){
+  if(classify(m)==='upcoming') return `<div class="setpts lose">–</div>`;
+  const a=num(m.fs_A)??0, b=num(m.fs_B)??0, v=side==='A'?a:b, ov=side==='A'?b:a;
+  return `<div class="setpts ${v>=ov?'win':'lose'}">${v}</div>`;
+}
+function setsHTML(m){
+  const c=classify(m), sets=setsArr(m); if(!sets.length) return '';
+  return `<div class="sets">${sets.map((s,i)=>{
+    const cur = c==='live' && i===sets.length-1 && s[0]<25 && s[1]<25 && s[0]!==s[1]+2 ; // heuristic current set
+    return `<span class="setbox ${c==='live'&&i===sets.length-1?'cur':''}">${i+1}. <b>${s[0]}</b>–<b>${s[1]}</b></span>`;
+  }).join('')}</div>`;
+}
+function pill(c){
+  return c==='live' ? `<span class="status-pill s-live">● LIVE</span>`
+    : c==='result' ? `<span class="status-pill s-result">Päättynyt</span>`
+    : `<span class="status-pill s-upcoming">Tuleva</span>`;
+}
+function matchCard(m, opts={}){
+  const c=classify(m);
+  const left = opts.ref
+    ? `<span class="ref-tag">🧑‍⚖️ Tuomaroi: ${m.referee_team_name||CLUBNAME}</span>`
+    : `<a class="cat" href="${standUrl(m.category_abbrevation)}" target="_blank" rel="noopener">${m.category_name||m.category_abbrevation}${m.group_name?` <span class="grp">· lohko ${m.group_name}</span>`:''}</a>`;
+  const refLine = !opts.ref && (m.referee_team_name||m.referee_1_name)
+    ? `<div class="ref"><span>🧑‍⚖️</span><span class="nm">${m.referee_team_name||m.referee_1_name}</span></div>`
+    : `<div class="ref"></div>`;
+  const v=venueOf(m);
+  return `<div class="card ${c==='live'?'live':''}">
+    <div class="row1">${left}${pill(c)}</div>
+    <div class="teams">
+      ${teamHTML(m,'A')} ${scoreHTML(m,'A')}
+      ${teamHTML(m,'B')} ${scoreHTML(m,'B')}
+    </div>
+    ${setsHTML(m)}
+    <div class="foot">
+      ${refLine}
+      <a href="${matchUrl(m.match_id)}" target="_blank" rel="noopener">${(DAY[m.date]?.n||'')} ${hhmm(m)}${v?' · '+v:''} ↗</a>
+    </div>
+  </div>`;
+}
+const sortByTime = list => list.slice().sort((a,b)=>dt(a)-dt(b));
+function sectionBlock(title, list, opts={}){
+  if(!list.length) return '';
+  const cls = opts.live?'secthead live':'secthead';
+  return `<div class="${cls}">${opts.icon||''} ${title} <span class="count">${list.length}</span><span class="ln"></span></div>`
+    + list.map(m=>matchCard(m,opts)).join('');
+}
+
+/* ---------- views ---------- */
+function renderFront(){
+  const el=$('#content');
+  const chips = DATES.map(d=>{
+    const isToday = d===todayHelsinki();
+    return `<div class="day ${d===selDay?'active':''} ${isToday?'today-mark':''}" data-day="${d}">
+      ${DAY[d].n.slice(0,2)} <small>${DAY[d].d}</small></div>`;
+  }).join('');
+
+  const dayMatches = ALL.filter(m=>m.date===selDay);
+  const live = sortByTime(dayMatches.filter(m=>classify(m)==='live'));
+  const up   = sortByTime(dayMatches.filter(m=>classify(m)==='upcoming'));
+  const done = sortByTime(dayMatches.filter(m=>classify(m)==='result')).reverse();
+
+  let html = `<div class="days">${chips}</div>`;
+  if(!dayMatches.length){
+    html += `<div class="empty">Ei JyväsLentis-otteluita tänä päivänä.</div>`;
+  }else{
+    html += sectionBlock('Käynnissä nyt', live, {live:true, icon:'🔴'});
+    html += sectionBlock('Tulossa', up, {icon:'⏱️'});
+    html += sectionBlock('Pelatut', done, {icon:'✅'});
+  }
+  el.innerHTML = html;
+  el.querySelectorAll('.day').forEach(d=>d.addEventListener('click',()=>{ selDay=d.dataset.day; renderFront(); }));
+}
+
+function renderTeam(){
+  const el=$('#content');
+  const mine = ALL.filter(m=>ourTeamName(m)===selTeam);
+  const myRef = REF.filter(m=>m.referee_team_name===selTeam);
+  const live = sortByTime(mine.filter(m=>classify(m)==='live'));
+  const up   = sortByTime(mine.filter(m=>classify(m)==='upcoming'));
+  const done = sortByTime(mine.filter(m=>classify(m)==='result')).reverse();
+
+  // categories / groups for standings
+  const groups={};
+  mine.forEach(m=>{ const k=m.category_abbrevation+'|'+(m.group_name||''); groups[k]={abbr:m.category_abbrevation,name:m.category_name,grp:m.group_name}; });
+  const standLinks = Object.values(groups).map(g=>
+    `<a href="${standUrl(g.abbr)}" target="_blank" rel="noopener">${g.name}${g.grp?' · lohko '+g.grp:''} <span class="arr">↗</span></a>`).join('');
+
+  let html = `<div class="teamhero"><div class="av">🏐</div><div>
+      <h2>${selTeam}</h2><p>${mine.length} ottelua · ${myRef.length} tuomarointia · Power Cup 2026</p></div></div>`;
+  html += sectionBlock('Käynnissä nyt', live, {live:true, icon:'🔴'});
+  html += sectionBlock('Tulevat ottelut', up, {icon:'⏱️'});
+  html += sectionBlock('Tulokset', done, {icon:'✅'});
+  html += sectionBlock('Tuomaroinnit', sortByTime(myRef), {icon:'🧑‍⚖️', ref:true});
+  html += `<div class="secthead">📊 Lohko & sarjataulukko<span class="ln"></span></div>`;
+  html += standLinks ? `<div class="stand">${standLinks}</div>` : `<div class="empty">Ei sarjatietoja.</div>`;
+  if(!mine.length && !myRef.length) html = html.replace(/<div class="secthead">📊[\s\S]*$/, '') + `<div class="empty">Ei otteluita tälle joukkueelle.</div>`;
+  el.innerHTML = html;
+}
+
+function render(){ if(selTeam) renderTeam(); else renderFront(); }
+
+$('#team').addEventListener('change', e=>{ selTeam=e.target.value; window.scrollTo({top:0,behavior:'smooth'}); render(); });
+$('#refreshBtn').addEventListener('click', ()=>{ $('#refreshBtn').textContent='↻ …'; load().then(()=>$('#refreshBtn').textContent='↻ Päivitä'); });
+
+load();
+setInterval(load, 10000);
+</script>
+</body>
+</html>
