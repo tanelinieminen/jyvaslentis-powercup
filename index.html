@@ -92,7 +92,9 @@
   .venue{font-size:12px;margin-top:9px;color:var(--text)}
   .venue.no-venue{color:var(--muted);font-style:italic}
   .foot{margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  .foot-links{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
   .official-link{color:var(--cyan);text-decoration:none;font-weight:700;white-space:nowrap}
+  .score-link{color:var(--gold);text-decoration:none;font-weight:700;white-space:nowrap}
   .foot .ref{display:flex;align-items:center;gap:6px;min-width:0}
   .foot .ref .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .foot a{color:var(--cyan);text-decoration:none;white-space:nowrap;font-weight:600}
@@ -156,6 +158,7 @@ const CLUB  = '40';
 const CLUBNAME = 'JyväsLentis';
 const standUrl = c => `https://powercup.torneopal.fi/taso/sarja.php?turnaus=power2026&sarja=${encodeURIComponent(c)}`;
 const matchUrl = id => `https://powercup.torneopal.fi/taso/ottelu.php?ottelu=${id}&turnaus=power2026`;
+const scoreUrl = id => `https://score.torneopal.net/?ottelu=${id}&turnaus=power2026`;
 const DAY = {
   '2026-06-11':{n:'Torstai',d:'11.6.'},'2026-06-12':{n:'Perjantai',d:'12.6.'},
   '2026-06-13':{n:'Lauantai',d:'13.6.'},'2026-06-14':{n:'Sunnuntai',d:'14.6.'}
@@ -311,7 +314,10 @@ function matchCard(m, opts={}){
     ${venueLine}
     <div class="foot">
       ${refLine}
-      <a class="official-link" href="${matchUrl(m.match_id)}" target="_blank" rel="noopener">${(DAY[m.date]?.n||'')} ${hhmm(m)} · Virallinen ottelusivu ↗</a>
+      <div class="foot-links">
+        <a class="official-link" href="${matchUrl(m.match_id)}" target="_blank" rel="noopener">${(DAY[m.date]?.n||'')} ${hhmm(m)} · Ottelusivu ↗</a>
+        <a class="score-link" href="${scoreUrl(m.match_id)}" target="_blank" rel="noopener">📋 Pöytäkirja ↗</a>
+      </div>
     </div>
   </div>`;
 }
