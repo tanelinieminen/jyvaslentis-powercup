@@ -320,7 +320,13 @@ function matchCard(m, opts={}){
     </div>
   </div>`;
 }
-const sortByTime = list => list.slice().sort((a,b)=>dt(a)-dt(b));
+function catSortKey(m){
+  const a = (m.category_abbrevation||m.category_name||'Z');
+  const letter = (a.match(/^([A-Z])/)||['','Z'])[1];
+  // E=0, D=1, C=2, B=3, A=4 — alphabetical reverse so E sorts first
+  return 'EDCBA'.indexOf(letter) === -1 ? 9 : 'EDCBA'.indexOf(letter);
+}
+const sortByTime = list => list.slice().sort((a,b)=>{ const dt_=dt(a)-dt(b); return dt_!==0 ? dt_ : catSortKey(a)-catSortKey(b); });
 function sectionBlock(title, list, opts={}){
   if(!list.length) return '';
   const cls = opts.live?'secthead live':'secthead';
